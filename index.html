@@ -18,15 +18,22 @@
 
     <script type="text/javascript" src="js/three.js"></script>
     <script type="text/javascript" src="js/ColladaLoader.js"></script>
+    <script type="text/javascript" src="js/OBJLoader.js"></script>
     <script type="text/javascript">
-        var camera, scene, renderer;
+        var camera, scene, manager, renderer;
         var loadedObject;
 
         init();
 
         function init() {
             // create a new scene that we will add objects to.
-            scene = new THREE.Scene();            
+            scene = new THREE.Scene(); 
+
+            // create manager to handle preloading of assets.
+            manager = new THREE.LoadingManager();
+            manager.onProgress = function ( item, loaded, total ) {
+                console.log( item, loaded, total );
+            };           
 
             // create a camera and add it to the scene.
             camera = new THREE.PerspectiveCamera( 1, window.innerWidth / window.innerHeight, 1, 1000);
@@ -38,8 +45,16 @@
                 color: 0xfff9e7
             });
 
+            //var texture = new THREE.Texture();
+            //var imageLoader = new THREE.ImageLoader( manager );
+            //imageLoader.load( 'img/grass.jpg', function ( image ) {
+            //    texture.image = image;
+            //    texture.needsUpdate = true;
+            //});
+
             // use Mark's load function to read object data and load it into the scene.
             loadColladaObject('pawn', material, 1, scene);
+            //loadOBJObject('pawn', material, manager, scene);
 
             // create a renderer to draw the scene on the screen. 
             renderer = new THREE.CanvasRenderer();
@@ -70,9 +85,25 @@
             });
         }
 
+        function loadOBJObject(modelname, material, manager, scene) {
+            var loader = new THREE.OBJLoader(manager);
+
+            loader.load( 'models/pawn.obj', function ( object ) {
+                loadedObject = object;
+
+                loadedObject.traverse(function (child) {
+                    if ( child instanceof THREE.Mesh ) {
+                        child.material = material;
+                    }
+                });
+
+                scene.add(loadedObject);
+            } );
+        }
+
         function animate() {
             if (loadedObject) {
-                loadedObject.rotation.x += 0.05;
+                loadedObject.rotation.x += 0.025;
             }
 
             requestAnimationFrame(animate);
